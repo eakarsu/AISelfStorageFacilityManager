@@ -1,0 +1,22 @@
+{
+  "name": "ai-self-storage-facility-manager",
+  "version": "1.0.0",
+  "description": "AI-powered Self-Storage Facility Manager with dynamic pricing, occupancy forecasting, climate control, security monitoring, and automated billing",
+  "scripts": {
+    "server": "nodemon server/index.js",
+    "client": "cd client && react-scripts start",
+    "seed": "node server/seed.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0",
+    "axios": "^1.7.7",
+    "concurrently": "^9.0.1",
+    "nodemon": "^3.1.7"
+  }
+}
