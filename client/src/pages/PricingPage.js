@@ -15,10 +15,12 @@ function PricingPage({ token }) {
   const [formData, setFormData] = useState(emptyRule);
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [applyMsg, setApplyMsg] = useState('');
+  const [applyLoading, setApplyLoading] = useState(false);
 
   const load = async () => {
     const res = await axios.get(`${API}/pricing`);
-    setRules(res.data);
+    setRules(res.data.data || res.data);
   };
 
   useEffect(() => { load(); }, []);
@@ -29,9 +31,24 @@ function PricingPage({ token }) {
       const res = await axios.post(`${API}/ai/pricing-analysis`);
       setAiData(res.data);
     } catch (err) {
-      setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] });
+      setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } });
     }
     setAiLoading(false);
+  };
+
+  const applyPricing = async () => {
+    if (!window.confirm('Apply AI-recommended pricing to all active storage units? This will update monthly rates in the database.')) return;
+    setApplyLoading(true);
+    setApplyMsg('');
+    try {
+      const res = await axios.post(`${API}/ai/apply-pricing`);
+      const updated = res.data.updated || 0;
+      setApplyMsg(`Success: Updated ${updated} unit${updated !== 1 ? 's' : ''} with AI-recommended pricing.`);
+      setTimeout(() => setApplyMsg(''), 5000);
+    } catch (err) {
+      setApplyMsg('Error: ' + (err.response?.data?.error || err.message));
+    }
+    setApplyLoading(false);
   };
 
   const handleSave = async () => {
@@ -60,9 +77,18 @@ function PricingPage({ token }) {
         <h1>Dynamic Pricing</h1>
         <div className="header-actions">
           <button className="btn btn-purple" onClick={runAI}>🤖 AI Pricing Analysis</button>
+          <button className="btn btn-blue" onClick={applyPricing} disabled={applyLoading} style={{ background: '#10b981', borderColor: '#10b981' }}>
+            {applyLoading ? 'Applying...' : '✓ Apply AI Pricing'}
+          </button>
           <button className="btn btn-blue" onClick={() => { setFormData(emptyRule); setEditItem(null); setShowForm(true); }}>+ New Rule</button>
         </div>
       </div>
+
+      {applyMsg && (
+        <div style={{ background: applyMsg.startsWith('Error') ? '#fef2f2' : '#f0fdf4', border: `1px solid ${applyMsg.startsWith('Error') ? '#ef4444' : '#22c55e'}`, borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 14, color: applyMsg.startsWith('Error') ? '#991b1b' : '#166534' }}>
+          {applyMsg}
+        </div>
+      )}
 
       <div className="data-table-container">
         <table className="data-table">

@@ -18,7 +18,7 @@ function ClimatePage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/climate`);
-    setZones(res.data);
+    setZones(res.data.data || res.data);
   };
 
   useEffect(() => { load(); }, []);
@@ -29,7 +29,7 @@ function ClimatePage({ token }) {
       const res = await axios.post(`${API}/ai/climate-optimization`);
       setAiData(res.data);
     } catch (err) {
-      setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] });
+      setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } });
     }
     setAiLoading(false);
   };

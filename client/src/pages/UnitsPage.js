@@ -18,7 +18,7 @@ function UnitsPage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/units`);
-    setUnits(res.data);
+    setUnits(res.data.data || res.data);
   };
 
   useEffect(() => { load(); }, []);

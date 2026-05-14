@@ -16,13 +16,13 @@ function RevenuePage({ token }) {
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const load = async () => { const res = await axios.get(`${API}/revenue`); setItems(res.data); };
+  const load = async () => { const res = await axios.get(`${API}/revenue`); setItems(res.data.data || res.data); };
   useEffect(() => { load(); }, []);
 
   const runAI = async () => {
     setAiLoading(true);
     try { const res = await axios.post(`${API}/ai/revenue-analysis`); setAiData(res.data); }
-    catch (err) { setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] }); }
+    catch (err) { setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } }); }
     setAiLoading(false);
   };
 

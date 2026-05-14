@@ -15,23 +15,49 @@ function BillingPage({ token }) {
   const [formData, setFormData] = useState(emptyRecord);
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [overdueList, setOverdueList] = useState([]);
+  const [showOverdue, setShowOverdue] = useState(false);
+  const [dunningMsg, setDunningMsg] = useState('');
 
   const load = async () => {
     const res = await axios.get(`${API}/billing`);
-    setRecords(res.data);
+    setRecords(res.data.data || res.data);
   };
 
   useEffect(() => { load(); }, []);
 
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
+
   const runAI = async () => {
     setAiLoading(true);
     try {
-      const res = await axios.post(`${API}/ai/billing-insights`);
+      const res = await axios.post(`${API}/ai/billing-insights`, {}, authHeaders);
       setAiData(res.data);
     } catch (err) {
-      setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] });
+      setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } });
     }
     setAiLoading(false);
+  };
+
+  const loadOverdueList = async () => {
+    try {
+      const res = await axios.get(`${API}/billing/overdue-list`, authHeaders);
+      setOverdueList(res.data.data || []);
+      setShowOverdue(true);
+    } catch (err) {
+      setDunningMsg('Error loading overdue list');
+    }
+  };
+
+  const flagOverdue = async (id) => {
+    try {
+      const res = await axios.post(`${API}/billing/${id}/flag-overdue`, {}, authHeaders);
+      setDunningMsg(`Dunning event: ${res.data.dunningStage} (${res.data.daysOverdue} days overdue)`);
+      loadOverdueList();
+      setTimeout(() => setDunningMsg(''), 4000);
+    } catch (err) {
+      setDunningMsg('Error: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   const handleSave = async () => {
@@ -67,9 +93,60 @@ function BillingPage({ token }) {
         <h1>Automated Billing</h1>
         <div className="header-actions">
           <button className="btn btn-purple" onClick={runAI}>🤖 AI Billing Insights</button>
+          <button className="btn btn-blue" onClick={loadOverdueList} style={{ background: '#ef4444', borderColor: '#ef4444' }}>Overdue Accounts</button>
           <button className="btn btn-blue" onClick={() => { setFormData(emptyRecord); setEditItem(null); setShowForm(true); }}>+ New Record</button>
         </div>
       </div>
+
+      {dunningMsg && (
+        <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 14 }}>
+          {dunningMsg}
+        </div>
+      )}
+
+      {showOverdue && (
+        <div style={{ background: '#fff', border: '1px solid #ef4444', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ margin: 0, color: '#991b1b' }}>Overdue Accounts ({overdueList.length})</h3>
+            <button onClick={() => setShowOverdue(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#fef2f2' }}>
+                <th style={{ padding: '8px 12px', textAlign: 'left' }}>Tenant</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left' }}>Amount</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left' }}>Due Date</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left' }}>Dunning Status</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {overdueList.map(r => (
+                <tr key={r.id} style={{ borderBottom: '1px solid #fee2e2' }}>
+                  <td style={{ padding: '8px 12px', fontWeight: 600 }}>{r.tenant_name}</td>
+                  <td style={{ padding: '8px 12px' }}>${parseFloat(r.amount).toFixed(2)}</td>
+                  <td style={{ padding: '8px 12px', color: '#ef4444' }}>{new Date(r.due_date).toLocaleDateString()}</td>
+                  <td style={{ padding: '8px 12px' }}>
+                    {r.dunning_stage ? (
+                      <span style={{ background: r.dunning_stage === 'lock' ? '#ef4444' : r.dunning_stage === 'final_notice' ? '#f59e0b' : '#3b82f6', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                        {r.dunning_stage.replace(/_/g, ' ').toUpperCase()}
+                      </span>
+                    ) : <span style={{ color: '#94a3b8' }}>No dunning</span>}
+                  </td>
+                  <td style={{ padding: '8px 12px' }}>
+                    <button onClick={() => flagOverdue(r.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>
+                      Flag Overdue
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {overdueList.length === 0 && (
+                <tr><td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#94a3b8' }}>No overdue accounts</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="data-table-container">
         <table className="data-table">

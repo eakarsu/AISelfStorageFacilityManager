@@ -8,14 +8,14 @@ function NotificationsPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
 
-  const load = async () => { const res = await axios.get(`${API}/notifications`); setItems(res.data); };
+  const load = async () => { const res = await axios.get(`${API}/notifications`); setItems(res.data.data || res.data); };
   useEffect(() => { load(); }, []);
 
   const generateAlerts = async () => {
     setLoading(true);
     try {
       const res = await axios.post(`${API}/notifications/generate`);
-      setItems(res.data);
+      setItems(res.data.data || res.data);
     } catch (err) {
       console.error(err);
     }

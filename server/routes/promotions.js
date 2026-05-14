@@ -1,6 +1,8 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
+const auth = require('../middleware/auth');
+router.use(auth);
 
 // Get all promotions
 router.get('/', async (req, res) => {

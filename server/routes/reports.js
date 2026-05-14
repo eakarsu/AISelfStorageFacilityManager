@@ -1,6 +1,8 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
+const auth = require('../middleware/auth');
+router.use(auth);
 
 // Revenue summary by month
 router.get('/revenue-summary', async (req, res) => {

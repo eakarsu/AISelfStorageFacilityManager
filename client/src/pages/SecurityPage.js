@@ -18,7 +18,7 @@ function SecurityPage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/security`);
-    setEvents(res.data);
+    setEvents(res.data.data || res.data);
   };
 
   useEffect(() => { load(); }, []);
@@ -29,7 +29,7 @@ function SecurityPage({ token }) {
       const res = await axios.post(`${API}/ai/security-analysis`);
       setAiData(res.data);
     } catch (err) {
-      setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] });
+      setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } });
     }
     setAiLoading(false);
   };

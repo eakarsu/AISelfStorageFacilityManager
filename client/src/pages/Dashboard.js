@@ -134,10 +134,14 @@ function Dashboard() {
         ]);
         const s = {};
         features.forEach((f, i) => {
-          s[f.path] = Array.isArray(featureResults[i].data) ? featureResults[i].data.length : '—';
+          const d = featureResults[i].data;
+          // Handle both paginated {data: [...], pagination: {...}} and plain array responses
+          const arr = Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : null);
+          s[f.path] = arr ? arr.length : (d?.pagination?.total ?? '—');
         });
         setStats(s);
-        const overdue = payRes.data.filter(p => p.status === 'overdue').reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+        const payList = Array.isArray(payRes.data) ? payRes.data : (payRes.data?.data || []);
+        const overdue = payList.filter(p => p.status === 'overdue').reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
         setSummary({
           occupancy: occRes.data,
           overdueAmount: overdue,

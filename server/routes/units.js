@@ -1,12 +1,25 @@
 const express = require('express');
 const pool = require('../db');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Get all units
+router.use(auth);
+
+// Get all units with pagination
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM storage_units ORDER BY unit_number');
-    res.json(result.rows);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+    const facilityId = req.query.facility_id;
+    const where = facilityId ? 'WHERE facility_id = $3' : '';
+    const params = facilityId ? [limit, offset, facilityId] : [limit, offset];
+    const [dataRes, countRes] = await Promise.all([
+      pool.query(`SELECT * FROM storage_units ${where} ORDER BY unit_number LIMIT $1 OFFSET $2`, params),
+      pool.query(`SELECT COUNT(*) FROM storage_units ${where}`, facilityId ? [facilityId] : []),
+    ]);
+    const total = parseInt(countRes.rows[0].count);
+    res.json({ data: dataRes.rows, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

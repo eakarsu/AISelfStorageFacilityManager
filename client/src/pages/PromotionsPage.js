@@ -13,7 +13,7 @@ function PromotionsPage({ token }) {
   const [editItem, setEditItem] = useState(null);
   const [formData, setFormData] = useState(emptyPromo);
 
-  const load = async () => { const res = await axios.get(`${API}/promotions`); setItems(res.data); };
+  const load = async () => { const res = await axios.get(`${API}/promotions`); setItems(res.data.data || res.data); };
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {

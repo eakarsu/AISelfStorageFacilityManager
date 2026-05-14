@@ -15,21 +15,33 @@ function OccupancyPage({ token }) {
   const [formData, setFormData] = useState(emptyForecast);
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [currentOccupancy, setCurrentOccupancy] = useState(null);
+
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
 
   const load = async () => {
     const res = await axios.get(`${API}/occupancy`);
-    setForecasts(res.data);
+    setForecasts(res.data.data || res.data);
   };
 
-  useEffect(() => { load(); }, []);
+  const loadCurrentOccupancy = async () => {
+    try {
+      const res = await axios.get(`${API}/ai/occupancy-current`, authHeaders);
+      setCurrentOccupancy(res.data.result);
+    } catch (err) {
+      console.error('Occupancy fetch error', err);
+    }
+  };
+
+  useEffect(() => { load(); loadCurrentOccupancy(); }, []);
 
   const runAI = async () => {
     setAiLoading(true);
     try {
-      const res = await axios.post(`${API}/ai/occupancy-forecast`);
+      const res = await axios.post(`${API}/ai/occupancy-forecast`, {}, authHeaders);
       setAiData(res.data);
     } catch (err) {
-      setAiData({ choices: [{ message: { content: 'Error: ' + (err.response?.data?.error || err.message) } }] });
+      setAiData({ result: { summary: 'Error: ' + (err.response?.data?.error || err.message) } });
     }
     setAiLoading(false);
   };
@@ -73,6 +85,40 @@ function OccupancyPage({ token }) {
           <button className="btn btn-blue" onClick={() => { setFormData(emptyForecast); setEditItem(null); setShowForm(true); }}>+ New Forecast</button>
         </div>
       </div>
+
+      {/* Occupancy Rate Gauge */}
+      {currentOccupancy && (
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Current Occupancy Rate', value: `${currentOccupancy.occupancyRate}%`, color: currentOccupancy.occupancyRate >= 80 ? '#22c55e' : currentOccupancy.occupancyRate >= 60 ? '#f59e0b' : '#ef4444' },
+            { label: 'Total Units', value: currentOccupancy.total, color: '#3b82f6' },
+            { label: 'Occupied', value: currentOccupancy.occupied, color: '#22c55e' },
+            { label: 'Available', value: currentOccupancy.available, color: '#6366f1' },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px', minWidth: 140, borderTop: `4px solid ${stat.color}` }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{stat.label}</div>
+            </div>
+          ))}
+          {/* Gauge Bar */}
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px', flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 700, marginBottom: 8 }}>OCCUPANCY GAUGE</div>
+            <div style={{ background: '#e2e8f0', borderRadius: 999, height: 20, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 999,
+                width: `${currentOccupancy.occupancyRate}%`,
+                background: currentOccupancy.occupancyRate >= 80 ? '#22c55e' : currentOccupancy.occupancyRate >= 60 ? '#f59e0b' : '#ef4444',
+                transition: 'width 0.5s ease',
+                display: 'flex', alignItems: 'center', paddingLeft: 8,
+                fontSize: 11, fontWeight: 700, color: '#fff',
+              }}>
+                {currentOccupancy.occupancyRate >= 20 ? `${currentOccupancy.occupancyRate}%` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="data-table-container">
         <table className="data-table">

@@ -13,7 +13,7 @@ function WaitlistPage({ token }) {
   const [editItem, setEditItem] = useState(null);
   const [formData, setFormData] = useState(emptyEntry);
 
-  const load = async () => { const res = await axios.get(`${API}/waitlist`); setItems(res.data); };
+  const load = async () => { const res = await axios.get(`${API}/waitlist`); setItems(res.data.data || res.data); };
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {
