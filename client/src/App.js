@@ -44,6 +44,11 @@ import GapNoLateFeeAutomation from './pages/GapNoLateFeeAutomation';
 import GapNoAuctionManagementForAbandonedUnits from './pages/GapNoAuctionManagementForAbandonedUnits';
 import GapNoPaymentGatewayIntegration from './pages/GapNoPaymentGatewayIntegration';
 import GapNoPublicWebhookSystem from './pages/GapNoPublicWebhookSystem';
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
+
 // === End Batch 07 ===
 
 
@@ -73,6 +78,10 @@ function App() {
     <Router>
       <Layout user={user} onLogout={handleLogout}>
         <Routes>
+        <Route path="/insights/timeline" element={<TimelineView />} />
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/" element={<Dashboard />} />
           <Route path="/units" element={<UnitsPage token={token} />} />
           <Route path="/pricing" element={<PricingPage token={token} />} />
