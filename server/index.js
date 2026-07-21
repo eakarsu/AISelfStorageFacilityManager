@@ -23,6 +23,7 @@ const promotionsRoutes = require('./routes/promotions');
 const waitlistRoutes = require('./routes/waitlist');
 const notificationsRoutes = require('./routes/notifications');
 const facilitiesRoutes = require('./routes/facilities');
+const pool = require('./db');
 
 const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
@@ -37,6 +38,16 @@ app.use(express.json());
 
 // Public routes
 app.use('/api/auth', authRoutes);
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use('/api/facility-security-workflow', auth, require('./routes/facilitySecurityWorkflow'));
+app.use(/^\/api\/(?:gap-|ai(?:\/|$)|ai-)/, auth, (req, res) => res.status(503).json({
+  error: 'Generated AI and gap routes are quarantined; use /api/facility-security-workflow',
+  retryable: false,
+}));
+app.use('/api', auth);
 
 // Protected routes (auth applied per-router)
 app.use('/api/facilities', facilitiesRoutes);
@@ -58,18 +69,10 @@ app.use('/api/promotions', promotionsRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err.message);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
 
 // AI feature mount: churn-prevention
@@ -88,3 +91,10 @@ app.use('/api/gap-no-auction-management-for-abandoned-units', require('./routes/
 app.use('/api/gap-no-payment-gateway-integration', require('./routes/gap-no-payment-gateway-integration'));
 app.use('/api/gap-no-public-webhook-system', require('./routes/gap-no-public-webhook-system'));
 // === End Batch 07 ===
+
+async function start() {
+  const result=await pool.query("SELECT to_regclass('public.facility_security_cases') AS workflow_table");
+  if(!result.rows[0].workflow_table) throw new Error('Database migrations are required; run ./scripts/migrate.sh');
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+start().catch(error=>{console.error('Failed to start server:',error.message);process.exitCode=1;});

@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const { jwtSecret } = require('../config/security');
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
@@ -22,7 +23,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -41,7 +42,7 @@ router.get('/me', async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
     const result = await pool.query('SELECT id, email, name, role FROM users WHERE id = $1', [decoded.id]);
     res.json(result.rows[0]);
   } catch (err) {

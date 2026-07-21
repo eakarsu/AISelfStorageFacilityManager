@@ -5,6 +5,7 @@
   "scripts": {
     "server": "nodemon server/index.js",
     "client": "cd client && react-scripts start",
+    "migrate": "bash scripts/migrate.sh",
     "seed": "node server/seed.js",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },

@@ -1,76 +1,34 @@
-#!/bin/bash
-
-echo "============================================="
-echo "  AI Self-Storage Facility Manager"
-echo "  Starting Application..."
-echo "============================================="
-
-# Load environment variables
-if [ -f .env ]; then
-  export $(cat .env | grep -v '^#' | xargs)
-fi
-
-SERVER_PORT=${SERVER_PORT:-4000}
-FRONTEND_PORT=${FRONTEND_PORT:-3000}
-
-# Kill any processes on the ports we need
-echo ""
-echo "🔧 Cleaning up ports $SERVER_PORT and $FRONTEND_PORT..."
-
-kill_port() {
-  local port=$1
-  local pids=$(lsof -ti:$port 2>/dev/null)
-  if [ ! -z "$pids" ]; then
-    echo "   Killing processes on port $port: $pids"
-    echo "$pids" | xargs kill -9 2>/dev/null
-    sleep 1
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$project_dir"
+test -f .env || { echo '.env is required (copy .env.example)' >&2; exit 1; }
+while IFS= read -r line || [[ -n "$line" ]]; do
+  line="${line%$'\r'}"
+  [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=(.*)$ ]] || continue
+  key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
+  if [[ "$value" == \"*\" && "$value" == *\" ]] || [[ "$value" == \'*\' && "$value" == *\' ]]; then
+    value="${value:1:${#value}-2}"
   fi
-}
-
-kill_port $SERVER_PORT
-kill_port $FRONTEND_PORT
-
-echo "   Ports cleared."
-
-# Check if PostgreSQL is running
-echo ""
-echo "🐘 Checking PostgreSQL..."
-if ! pg_isready -q 2>/dev/null; then
-  echo "   Starting PostgreSQL..."
-  brew services start postgresql@14 2>/dev/null || brew services start postgresql 2>/dev/null
-  sleep 2
+  [[ -n "${!key+x}" ]] || export "$key=$value"
+done < .env
+: "${DATABASE_URL:?DATABASE_URL is required}"; : "${JWT_SECRET:?JWT_SECRET is required}"
+(( ${#JWT_SECRET} >= 32 )) || { echo 'JWT_SECRET must contain at least 32 characters' >&2; exit 1; }
+test -d node_modules || { echo 'Backend dependencies are missing; install them explicitly before starting' >&2; exit 1; }
+backend_port="${BACKEND_PORT:-${SERVER_PORT:-4000}}"; frontend_port="${FRONTEND_PORT:-${CLIENT_PORT:-3000}}"
+for port in "$backend_port" "$frontend_port"; do
+  if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $port is already in use; no process was changed" >&2; exit 1; fi
+done
+mode="${1:-all}"; pids=(); trap 'for pid in "${pids[@]:-}"; do kill "$pid" 2>/dev/null || true; done' EXIT INT TERM
+if [[ "$mode" == backend || "$mode" == all ]]; then SERVER_PORT="$backend_port" CLIENT_PORT="$frontend_port" CLIENT_URL="http://127.0.0.1:$frontend_port" npm run server & pids+=("$!"); fi
+if [[ "$mode" == frontend || "$mode" == all ]]; then
+  if [[ -x client/node_modules/.bin/react-scripts ]]; then
+    PORT="$frontend_port" REACT_APP_API_URL="http://127.0.0.1:$backend_port/api" BROWSER=none npm --prefix client start & pids+=("$!")
+  elif [[ "$mode" == frontend ]]; then
+    echo 'Frontend dependencies are missing; install them explicitly before starting' >&2; exit 1
+  else
+    echo 'Frontend dependencies are not installed; starting the API only.'
+  fi
 fi
-echo "   PostgreSQL is ready."
-
-# Install dependencies
-echo ""
-echo "📦 Installing dependencies..."
-npm install --silent 2>/dev/null
-
-if [ ! -d "client/node_modules" ]; then
-  echo "   Installing client dependencies..."
-  cd client && npm install --silent 2>/dev/null && cd ..
-fi
-
-# Seed the database
-echo ""
-echo "🌱 Seeding database..."
-node server/seed.js
-
-# Start the application with hot reload
-echo ""
-echo "============================================="
-echo "  ✅ Application Starting!"
-echo "  Server:   http://localhost:$SERVER_PORT"
-echo "  Frontend: http://localhost:$FRONTEND_PORT"
-echo ""
-echo "  Login: admin@storagepro.com / admin123"
-echo "============================================="
-echo ""
-
-# Start both server (with nodemon for reload) and client
-npx concurrently \
-  --names "SERVER,CLIENT" \
-  --prefix-colors "blue,green" \
-  "npx nodemon --watch server server/index.js" \
-  "cd client && PORT=$FRONTEND_PORT BROWSER=none npx react-scripts start"
+[[ ${#pids[@]} -gt 0 ]] || { echo 'Usage: ./start.sh [all|backend|frontend]' >&2; exit 2; }
+wait

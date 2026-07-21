@@ -1,0 +1,8 @@
+const test=require('node:test');const assert=require('node:assert/strict');const p=require('../domain/facilitySecurityPolicy');
+const evidence={event_ref:'e1',facility_ref:'f1',source_ref:'cam1',source_version:'v2',checksum:'sha:x',permission_version:'p1',captured_at:'2026-07-19T00:00:00Z',severity:'high'};
+test('validates versioned isolated security evidence',()=>assert.equal(p.validateEvidence(evidence).isolated_content,true));
+test('rejects invalid evidence timestamps',()=>assert.throws(()=>p.validateEvidence({...evidence,captured_at:'bad'}),/captured_at/));
+test('answers only with authorized citations',()=>assert.equal(p.validateAnswer({authorized_source_refs:['cam1'],citations:[{source_ref:'cam1',source_version:'v2',locator:'frame:9'}],conflicts:[],answer:'Verified event'}).abstain,false));
+test('abstains on conflicts',()=>assert.equal(p.validateAnswer({authorized_source_refs:[],citations:[],conflicts:['x'],answer:'unsafe'}).reason,'conflicting_evidence'));
+test('requires independent action approval',()=>assert.throws(()=>p.validateTransition('manager_review','action_approved',{role:'facility_manager',actorId:'u1',createdBy:'u1',evidenceCount:1}),/independent/));
+test('requires dispatch and disposition evidence',()=>{assert.throws(()=>p.validateTransition('action_approved','dispatched',{role:'security_manager'}),/receipt/);assert.equal(p.validateTransition('action_approved','dispatched',{role:'security_manager',providerReceipt:{provider:'access-control',receipt_id:'r1',status:'acknowledged',acknowledged_at:'2026-07-19T00:00:00Z'}}),true);assert.throws(()=>p.validateTransition('resolved','closed',{role:'facility_manager'}),/disposition/);});

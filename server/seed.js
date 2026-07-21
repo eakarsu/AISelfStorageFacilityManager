@@ -1,34 +1,13 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-
-const adminPool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: 'postgres',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-});
+if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') throw new Error('Set ALLOW_DESTRUCTIVE_SEED=true to run the destructive seed explicitly');
+if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
+if (!process.env.SEED_ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD.length < 12) throw new Error('SEED_ADMIN_PASSWORD must contain at least 12 characters');
 
 async function seed() {
-  // Create database if not exists
-  try {
-    const dbCheck = await adminPool.query(`SELECT 1 FROM pg_database WHERE datname='self_storage_manager'`);
-    if (dbCheck.rows.length === 0) {
-      await adminPool.query('CREATE DATABASE self_storage_manager');
-      console.log('Database created.');
-    }
-  } catch (err) {
-    console.log('Database may already exist:', err.message);
-  }
-  await adminPool.end();
-
   const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'self_storage_manager',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
+    connectionString: process.env.DATABASE_URL,
   });
 
   try {
@@ -285,7 +264,7 @@ async function seed() {
     console.log('Tables created.');
 
     // Seed Users
-    const passwordHash = await bcrypt.hash('admin123', 10);
+    const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 12);
     await pool.query(`
       INSERT INTO users (email, password_hash, name, role) VALUES
       ('admin@storagepro.com', '${passwordHash}', 'John Manager', 'admin'),
@@ -598,7 +577,7 @@ async function seed() {
     console.log('Waitlist seeded (10 items).');
 
     console.log('\n✅ All seed data inserted successfully!');
-    console.log('Login credentials: admin@storagepro.com / admin123');
+    console.log('Seed users created; credentials were supplied through the environment.');
   } catch (err) {
     console.error('Seed error:', err.message);
   } finally {
