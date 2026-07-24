@@ -19,8 +19,10 @@ function parseAIJson(text) {
 }
 
 async function callOpenRouter(prompt, context) {
+  if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is required');
+  const baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
   const response = await axios.post(
-    'https://openrouter.ai/api/v1/chat/completions',
+    `${baseUrl}/chat/completions`,
     {
       model: process.env.OPENROUTER_MODEL || MODEL,
       messages: [
@@ -45,7 +47,8 @@ async function callOpenRouter(prompt, context) {
     }
   );
 
-  const content = response.data.choices?.[0]?.message?.content || '';
+  const content = response.data.choices?.[0]?.message?.content;
+  if (!content || !String(content).trim()) throw new Error('OpenRouter returned an empty response');
   const parsed = parseAIJson(content);
   return { success: true, result: parsed || { summary: content }, model: response.data.model, raw: content };
 }
@@ -54,7 +57,7 @@ async function persistResult(userId, endpoint, entityId, result) {
   await pool.query(
     `INSERT INTO ai_results (user_id, endpoint, entity_id, result) VALUES ($1,$2,$3,$4)`,
     [userId, endpoint, entityId, JSON.stringify(result)]
-  ).catch(() => {});
+  );
 }
 
 // Apply auth to all AI routes

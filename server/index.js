@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/facility-security-workflow', auth, require('./routes/facilitySecurityWorkflow'));
-app.use(/^\/api\/(?:gap-|ai(?:\/|$)|ai-)/, auth, (req, res) => res.status(503).json({
+app.use(/^\/api\/(?:gap-|ai-)/, auth, (req, res) => res.status(503).json({
   error: 'Generated AI and gap routes are quarantined; use /api/facility-security-workflow',
   retryable: false,
 }));

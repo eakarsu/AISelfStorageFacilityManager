@@ -20,7 +20,7 @@ for port in "$backend_port" "$frontend_port"; do
   if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $port is already in use; no process was changed" >&2; exit 1; fi
 done
 mode="${1:-all}"; pids=(); trap 'for pid in "${pids[@]:-}"; do kill "$pid" 2>/dev/null || true; done' EXIT INT TERM
-if [[ "$mode" == backend || "$mode" == all ]]; then SERVER_PORT="$backend_port" CLIENT_PORT="$frontend_port" CLIENT_URL="http://127.0.0.1:$frontend_port" npm run server & pids+=("$!"); fi
+if [[ "$mode" == backend || "$mode" == all ]]; then SERVER_PORT="$backend_port" CLIENT_PORT="$frontend_port" CLIENT_URL="http://127.0.0.1:$frontend_port" node server/index.js & pids+=("$!"); fi
 if [[ "$mode" == frontend || "$mode" == all ]]; then
   if [[ -x client/node_modules/.bin/react-scripts ]]; then
     PORT="$frontend_port" REACT_APP_API_URL="http://127.0.0.1:$backend_port/api" BROWSER=none npm --prefix client start & pids+=("$!")
