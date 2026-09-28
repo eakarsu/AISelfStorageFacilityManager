@@ -63,7 +63,7 @@ function Login({ onLogin }) {
         </form>
 
         <button className="btn-fill" onClick={fillCredentials} style={{ width: '100%' }}>
-          Fill Demo Credentials
+          Auto Fill Demo Credentials
         </button>
       </div>
     </div>
