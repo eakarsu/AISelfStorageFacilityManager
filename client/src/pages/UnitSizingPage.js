@@ -13,6 +13,12 @@ function UnitSizingPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const presets = [
+    { label: 'Studio move', items: 'Queen bed, compact sofa, dresser, bicycle, and 20 moving boxes.', budget: '175', sizes: '5x10,10x10,10x15', climate: false },
+    { label: 'Family furniture', items: 'Two bedroom sets, dining table, sectional sofa, appliances, and 45 boxes.', budget: '320', sizes: '10x10,10x15,10x20', climate: true },
+    { label: 'Business archive', items: 'Forty document boxes, shelving, office chairs, and two desks.', budget: '140', sizes: '5x5,5x10,10x10', climate: true },
+  ];
+
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const run = async () => {
@@ -44,6 +50,7 @@ function UnitSizingPage({ token }) {
       </div>
 
       <div className="card" style={{ padding: 20, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 16 }}>
+        <div className="ai-preset-bar"><strong>Examples</strong>{presets.map(preset => <button type="button" className="btn btn-secondary" key={preset.label} onClick={() => { setItems(preset.items); setBudget(preset.budget); setUnitTypes(preset.sizes); setClimateNeeded(preset.climate); setError(''); }}>{preset.label}</button>)}</div>
         <div className="form-group">
           <label>Items to store *</label>
           <textarea className="form-control" rows={5} value={items} onChange={e => setItems(e.target.value)} placeholder="e.g. 1-bedroom apartment: queen bed, sofa, dining table, ~30 boxes, no fragile items" />

@@ -54,6 +54,22 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/demo-login', async (req, res) => {
+  const { DEMO_EMAIL: email, DEMO_PASSWORD: password } = process.env;
+  if (!email || !password) return res.status(503).json({ error: 'Demo account is not configured' });
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(503).json({ error: 'Configured demo account is unavailable' });
+    }
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, jwtSecret, { expiresIn: '24h' });
+    return res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+  } catch (err) {
+    return res.status(503).json({ error: 'Demo account is unavailable' });
+  }
+});
+
 router.get('/me', async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];

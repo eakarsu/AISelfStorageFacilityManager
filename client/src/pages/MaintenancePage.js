@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
 
@@ -16,7 +17,7 @@ function MaintenancePage({ token }) {
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const load = async () => { const res = await axios.get(`${API}/maintenance`); setItems(res.data.data || res.data); };
+  const load = async () => { const res = await axios.get(`${API}/maintenance`); setItems(recordRows(res.data)); };
   useEffect(() => { load(); }, []);
 
   const runAI = async () => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
 
@@ -20,7 +21,7 @@ function PricingPage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/pricing`);
-    setRules(res.data.data || res.data);
+    setRules(recordRows(res.data));
   };
 
   useEffect(() => { load(); }, []);

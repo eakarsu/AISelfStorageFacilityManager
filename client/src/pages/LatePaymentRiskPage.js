@@ -11,6 +11,12 @@ function LatePaymentRiskPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const presets = [
+    { label: 'Upcoming bills', days: 30, outreach: true },
+    { label: 'Weekly triage', days: 7, outreach: false },
+    { label: 'Quarterly collections', days: 90, outreach: true },
+  ];
+
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const run = async () => {
@@ -35,6 +41,7 @@ function LatePaymentRiskPage({ token }) {
       </div>
 
       <div className="card" style={{ padding: 20, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 16 }}>
+        <div className="ai-preset-bar"><strong>Examples</strong>{presets.map(preset => <button type="button" className="btn btn-secondary" key={preset.label} onClick={() => { setBillsAhead(preset.days); setIncludeOutreach(preset.outreach); setError(''); }}>{preset.label}</button>)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div className="form-group">
             <label>Look ahead (days)</label>

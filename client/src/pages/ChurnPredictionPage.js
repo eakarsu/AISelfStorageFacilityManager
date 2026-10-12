@@ -11,6 +11,12 @@ function ChurnPredictionPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const presets = [
+    { label: 'Next month', days: 30, offers: true },
+    { label: 'Quarterly review', days: 90, offers: false },
+    { label: 'Urgent retention', days: 14, offers: true },
+  ];
+
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const run = async () => {
@@ -35,6 +41,7 @@ function ChurnPredictionPage({ token }) {
       </div>
 
       <div className="card" style={{ padding: 20, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 16 }}>
+        <div className="ai-preset-bar"><strong>Examples</strong>{presets.map(preset => <button type="button" className="btn btn-secondary" key={preset.label} onClick={() => { setHorizonDays(preset.days); setIncludeRetentionOffers(preset.offers); setError(''); }}>{preset.label}</button>)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div className="form-group">
             <label>Horizon (days)</label>

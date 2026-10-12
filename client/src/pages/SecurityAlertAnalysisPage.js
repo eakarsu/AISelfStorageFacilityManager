@@ -12,6 +12,12 @@ function SecurityAlertAnalysisPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const presets = [
+    { label: 'Recent alarms', hours: 24, resolved: false, zones: 'front gate, loading area' },
+    { label: 'Weekend review', hours: 72, resolved: true, zones: 'parking lot, perimeter' },
+    { label: 'All zones', hours: 168, resolved: true, zones: 'all buildings' },
+  ];
+
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const run = async () => {
@@ -41,6 +47,7 @@ function SecurityAlertAnalysisPage({ token }) {
       </div>
 
       <div className="card" style={{ padding: 20, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 16 }}>
+        <div className="ai-preset-bar"><strong>Examples</strong>{presets.map(preset => <button type="button" className="btn btn-secondary" key={preset.label} onClick={() => { setHoursBack(preset.hours); setIncludeResolved(preset.resolved); setFocusZones(preset.zones); setError(''); }}>{preset.label}</button>)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div className="form-group">
             <label>Look back (hours)</label>

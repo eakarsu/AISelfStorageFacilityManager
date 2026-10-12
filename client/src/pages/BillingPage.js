@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
 
@@ -21,7 +22,7 @@ function BillingPage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/billing`);
-    setRecords(res.data.data || res.data);
+    setRecords(recordRows(res.data));
   };
 
   useEffect(() => { load(); }, []);
@@ -42,7 +43,7 @@ function BillingPage({ token }) {
   const loadOverdueList = async () => {
     try {
       const res = await axios.get(`${API}/billing/overdue-list`, authHeaders);
-      setOverdueList(res.data.data || []);
+      setOverdueList(recordRows(res.data));
       setShowOverdue(true);
     } catch (err) {
       setDunningMsg('Error loading overdue list');

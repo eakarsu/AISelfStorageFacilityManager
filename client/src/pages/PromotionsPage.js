@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 import Modal from '../components/Modal';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
@@ -13,7 +14,7 @@ function PromotionsPage({ token }) {
   const [editItem, setEditItem] = useState(null);
   const [formData, setFormData] = useState(emptyPromo);
 
-  const load = async () => { const res = await axios.get(`${API}/promotions`); setItems(res.data.data || res.data); };
+  const load = async () => { const res = await axios.get(`${API}/promotions`); setItems(recordRows(res.data)); };
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {

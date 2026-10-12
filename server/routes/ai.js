@@ -63,6 +63,18 @@ async function persistResult(userId, endpoint, entityId, result) {
 // Apply auth to all AI routes
 router.use(auth);
 
+router.get('/results/:endpoint', async (req, res) => {
+  try {
+    const results = await pool.query(
+      'SELECT id, endpoint, result, created_at FROM ai_results WHERE user_id = $1 AND endpoint = $2 ORDER BY created_at DESC LIMIT 20',
+      [req.user.id, req.params.endpoint]
+    );
+    res.json({ items: results.rows });
+  } catch (err) {
+    res.status(503).json({ error: 'Saved AI results are unavailable' });
+  }
+});
+
 // GET /api/occupancy/current - computed occupancy rate
 router.get('/occupancy-current', async (req, res) => {
   try {

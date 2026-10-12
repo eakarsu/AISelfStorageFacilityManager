@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
@@ -8,14 +9,14 @@ function NotificationsPage({ token }) {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
 
-  const load = async () => { const res = await axios.get(`${API}/notifications`); setItems(res.data.data || res.data); };
+  const load = async () => { const res = await axios.get(`${API}/notifications`); setItems(recordRows(res.data)); };
   useEffect(() => { load(); }, []);
 
   const generateAlerts = async () => {
     setLoading(true);
     try {
       const res = await axios.post(`${API}/notifications/generate`);
-      setItems(res.data.data || res.data);
+      setItems(recordRows(res.data));
     } catch (err) {
       console.error(err);
     }

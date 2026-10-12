@@ -9,9 +9,17 @@ function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fillCredentials = () => {
-    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
-    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
+  const demoLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/auth/demo-login`);
+      onLogin(res.data.token, res.data.user);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Demo login unavailable');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -62,8 +70,8 @@ function Login({ onLogin }) {
           </button>
         </form>
 
-        <button className="btn-fill" onClick={fillCredentials} style={{ width: '100%' }}>
-          Auto Fill Demo Credentials
+        <button type="button" className="btn-fill" onClick={demoLogin} disabled={loading} style={{ width: '100%' }}>
+          Log In as Demo
         </button>
       </div>
     </div>

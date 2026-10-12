@@ -1,5 +1,6 @@
 // // === Batch 07 Gaps & Frontend Mounts ===
 import React, { useState } from 'react';
+import FormattedAIReport from '../components/FormattedAIReport';
 
 export default function CfTenantPortfolioSegmentation() {
   const [input, setInput] = useState('');
@@ -14,7 +15,7 @@ export default function CfTenantPortfolioSegmentation() {
       },
       {
           "label": "Data sample",
-          "value": "Analyze this Tenant portfolio segmentation data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+          "value": "Analyze this Tenant portfolio segmentation data sample.\nOperating context:\n- Facility occupancy is 87% overall; climate-controlled 10x10 units are nearly full.\n- Three customer requests are waiting for staff review, including a move-in this week.\n- The manager wants clear priorities, evidence gaps, and customer impact before taking action.\nReturn structured findings, anomalies, recommendations, and confidence. State any missing prerequisites explicitly."
       },
       {
           "label": "Executive review",
@@ -82,11 +83,7 @@ export default function CfTenantPortfolioSegmentation() {
       {error && (
         <div style={{ marginTop: 16, padding: 12, background: '#fee', color: '#900', borderRadius: 6 }}>{error}</div>
       )}
-      {output && (
-        <pre style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 6, overflow: 'auto', maxHeight: 480 }}>
-{JSON.stringify(output, null, 2)}
-        </pre>
-      )}
+      {output && <FormattedAIReport response={output} />}
     </div>
   );
 }

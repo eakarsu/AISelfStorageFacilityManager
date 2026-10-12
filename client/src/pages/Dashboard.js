@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
@@ -140,7 +141,7 @@ function Dashboard() {
           s[f.path] = arr ? arr.length : (d?.pagination?.total ?? '—');
         });
         setStats(s);
-        const payList = Array.isArray(payRes.data) ? payRes.data : (payRes.data?.data || []);
+        const payList = recordRows(payRes.data);
         const overdue = payList.filter(p => p.status === 'overdue').reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
         setSummary({
           occupancy: occRes.data,

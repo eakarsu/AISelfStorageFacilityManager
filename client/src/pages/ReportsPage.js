@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
@@ -28,12 +29,12 @@ function ReportsPage({ token }) {
           axios.get(`${API}/reports/lease-expirations`),
         ]);
         setOccupancySummary(occ.data);
-        setOccupancyByType(occType.data);
-        setPaymentStatus(pay.data);
-        setRevenueByCategory(revCat.data);
-        setRevenueSummary(revSum.data);
-        setMaintenanceSummary(maint.data);
-        setLeaseExpirations(lease.data);
+        setOccupancyByType(recordRows(occType.data));
+        setPaymentStatus(recordRows(pay.data));
+        setRevenueByCategory(recordRows(revCat.data));
+        setRevenueSummary(recordRows(revSum.data));
+        setMaintenanceSummary(recordRows(maint.data));
+        setLeaseExpirations(recordRows(lease.data));
       } catch (err) {
         console.error(err);
       }

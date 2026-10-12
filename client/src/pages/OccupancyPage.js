@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { recordRows } from '../utils/recordRows';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
 
@@ -21,7 +22,7 @@ function OccupancyPage({ token }) {
 
   const load = async () => {
     const res = await axios.get(`${API}/occupancy`);
-    setForecasts(res.data.data || res.data);
+    setForecasts(recordRows(res.data));
   };
 
   const loadCurrentOccupancy = async () => {
