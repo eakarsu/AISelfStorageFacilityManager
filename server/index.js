@@ -48,6 +48,7 @@ app.use(/^\/api\/(?:gap-|ai-)/, auth, (req, res) => res.status(503).json({
   retryable: false,
 }));
 app.use('/api', auth);
+app.use('/api/feature-pack', require('./routes/featurePack'));
 
 // Protected routes (auth applied per-router)
 app.use('/api/facilities', facilitiesRoutes);
